@@ -39,7 +39,7 @@ Raveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.
 + Excel  
 + JMP Pro  
 
-**Approximately how many hours were spent working on this submission in total?** 
+**Approximately how many hours were spent working on this submission in total?** 60
 
 **May we post your submission in the Visual Analytics Benchmark Repository after VAST Challenge 2022 is complete?** YES 
 
@@ -64,6 +64,338 @@ Provide your answer and corresponding images here.
 Provide your answer and corresponding images here.
 
 3 – Describe the health of the various employers within the city limits. What employment patterns do you observe? Do you notice any areas of particularly high or low turnover? Limit your response to 10 images and 500 words.
+
+
+```{r, echo =FALSE}
+packages = c('tidyverse','ggplot2','dplyr','treemap',
+             'sf','tmap','ggpubr','patchwork','cowplot',
+             'plotly','rPackedBar')
+for(p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p, character.only = T)
+}
+
+```
+
+```{r, echo = FALSE}
+switchEmployeesAllDetails <- read_rds("data/switchEmployeesAllDetails.rds")
+prevEmp_sf <- read_rds("data/prevEmp_sf.rds")
+recntEmp_sf <- read_rds("data/recntEmp_sf.rds")
+buildings <- read_sf("data/wkt/Buildings.csv", 
+                   options = "GEOM_POSSIBLE_NAMES=location")
+employers <- read_sf("data/wkt/Employers.csv", 
+                   options = "GEOM_POSSIBLE_NAMES=location")
+prev_csv <- read_csv("data/prev.csv")
+rec_csv <- read_csv("data/rec.csv")
+overallTurnoverdf_sf <- read_rds("data/overallTurnoverdf_sf.rds")
+
+WageEmp_sf <- read_rds("data/WageEmp_sf.rds")
+jobs <- read_csv("data/jobs.csv")
+
+travel <- read_csv("data/travelJournal.csv")
+participants <- read_csv("data/participants.csv")
+```
+### Describe the health of the various employers within the city limits. What employment patterns do you observe? Do you notice any areas of particularly high or low turnover? 
+
+Well, from the given data, the health of the employers can be compared by no. of jobs and wage they provide. Given the fact that the employers vary in no. of jobs they provide , who pays their employees high wage is also a crucial criteria while determining the employers financial health.
+
+```{r, echo=FALSE}
+no.ofjobs <- jobs %>% 
+  group_by(employerId) %>%
+  summarise(no.ofjobs = n(),
+            totalWage = sum(hourlyRate),
+            avgWage = mean(hourlyRate)) %>%
+            arrange(desc(totalWage)) %>%
+            #eduLevel = educationRequirement) %>%
+  
+  dplyr::rename('Average Wage' = 'avgWage') %>%
+  mutate(label = paste(no.ofjobs, 'Jobs'))
+#write_csv(no.ofjobs, "data/no.ofjobs.csv")
+
+```
+
+
+```{r,fig.height = 8, fig.width = 12, echo=FALSE}
+
+ treemap(no.ofjobs,
+        index = c('label', 'employerId'),
+        vSize = 'totalWage',
+        vColor = 'Average Wage',
+        palette = "RdYlBu",
+        type = 'value',
+        title = 'Wage by Employer',
+        fontsize.title = 20
+        )
+
+
+
+```
+
+It is observed that Employers with Ids 383, 429 who have highest no. of jobs are paying well their employees. Also employers with Ids 848, 866 are even more good in terms of pay but they offeronly 2 jobs. Keeping all these employers in the healthy pedestal, employers like 1301, 1762 are really financially unhealthy as they offer already provide less no. of jobs and they pay their employees so low.   
+
+```{r, echo=FALSE}
+jobsedu <- jobs %>%
+  group_by(employerId, educationRequirement) %>%
+  summarise(jobnum = n(),
+            avgHourlyPay = round(mean(hourlyRate),2),
+            totalHourlyPay = sum(hourlyRate)) %>%
+  rename('Average Hourly Pay' = 'avgHourlyPay') 
+```
+
+```{r, echo= FALSE}
+p1 <- plotly_packed_bar(input_data = jobsedu %>%
+                          filter(educationRequirement=="Low"), 
+                       label_column = 'employerId',
+                       value_column = 'Average Hourly Pay',
+                       number_rows = 10,
+                       plot_title = 'Top 10 Paying Employers for Low Educational Qualification', 
+                       xaxis_label = 'Average Hourly Pay',
+                       hover_label = 'Average Hourly Pay',
+                       min_label_width = 0.001,
+                       color_bar_color = '#C71585',
+                       label_color = 'white') 
+
+plotly::config(p1, displayModeBar = FALSE)
+```
+
+```{r, echo= FALSE}
+p2 <- plotly_packed_bar(input_data = jobsedu %>%
+                          filter(educationRequirement=="HighSchoolOrCollege"), 
+                       label_column = 'employerId',
+                       value_column = 'Average Hourly Pay',
+                       number_rows = 10,
+                       plot_title = 'Top 10 Paying Workplaces for High School or College Education Jobs',
+                       xaxis_label = 'Average Hourly Pay',
+                       hover_label = 'Average Hourly Pay',
+                       min_label_width = 0.002,
+                       color_bar_color = '#D2691E',
+                       label_color = 'white') 
+plotly::config(p2,displayModeBar = FALSE)
+```
+
+```{r, echo= FALSE}
+p3 <- plotly_packed_bar(input_data = jobsedu %>%
+                          filter(educationRequirement=="Bachelors"), 
+                       label_column = 'employerId',
+                       value_column = 'Average Hourly Pay',
+                       number_rows = 10,
+                       plot_title = 'Top 10 Paying Employers for Bachelors Educational Qualification',
+                       xaxis_label = 'Average Hourly Pay',
+                       hover_label = 'Average Hourly Pay',
+                       min_label_width = 0.001,
+                       color_bar_color = '#00008B',
+                       label_color = 'white') 
+
+plotly::config(p3, displayModeBar = FALSE)
+```
+```{r, echo= FALSE}
+p4 <- plotly_packed_bar(input_data = jobsedu %>%
+                          filter(educationRequirement=="Graduate"), 
+                       label_column = 'employerId',
+                       value_column = 'Average Hourly Pay',
+                       number_rows = 10,
+                       plot_title = 'Top 10 Paying Employers for Graduate Educational Qualification',
+                       xaxis_label = 'Average Hourly Pay',
+                       hover_label = 'Average Hourly Pay',
+                       min_label_width = 0.002,
+                       color_bar_color = 'DC143C',
+                       label_color = 'white') 
+plotly::config(p4, displayModeBar = FALSE)
+```
+
+It is clear that employers with Ids 1737, 1771 provide high wages for employees with Low Educational qualification. Similarly employers with Ids 424, 1777 provide high wages for employees with High School or College Educational qualification. Employers with Ids 1304, 1782 provide high wages for employees with Bachelors Educational qualification and employers with Ids 428, 865 provide high wages for employees with Graduate Educational qualification.
+
+```{r,fig.height = 8, fig.width = 12, echo=FALSE}
+
+
+switchEmployeesAllDetails$participantId <- as.character(switchEmployeesAllDetails$participantId)
+                     
+p1<- ggplot(switchEmployeesAllDetails,
+            aes(x=participantId, y=payDiff))+
+     geom_bar(stat="identity", aes(fill = payStatus))+
+     scale_fill_manual(values=c(`Pay Decrease` ="firebrick1", `Pay Increase` ="steelblue")) +
+     labs(y= 'Pay\n Difference',
+          title="Employee Wage Difference Between Previous and Recent Workplace", 
+          x='Participant Id') +
+     theme(axis.title.y=element_text(angle=0),
+           #axis.ticks.x=element_blank(),
+           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+           
+           panel.background = element_blank(),
+           axis.line = element_line(color='grey'), 
+           plot.title = element_text(hjust = 0.5),
+           axis.title.y.left = element_text(vjust = 0.5), axis.text = element_text(face="bold")
+      )
+p1
+```
+
+It is also understood that participants don't switch the job just for higher salary. It is because almost 50% of the participants who switched job gets paid low than the previous job. 
+
+
+```{r, fig.height=10 , fig.width=17, echo =FALSE}
+
+tmap_mode("plot")
+
+  lostemp <- tm_shape(buildings)+
+  tm_polygons(col = "white",
+           size = 1,
+           border.col = "grey",
+           border.lwd = 1)+
+  tm_shape(prevEmp_sf) +
+  tm_bubbles(col = "red",
+             n=3,
+             size = "no.ofempLeft") +
+  tm_compass(position = c("right", "top"),
+                 type = "4star",
+                 show.labels = 2)+
+  tm_layout(main.title = "Which employer lost more employees ?",
+
+    main.title.size = 2,
+            legend.height = 0.3,
+            legend.width = 0.3,
+            legend.outside = FALSE,
+            legend.position = c("left", "bottom"),
+            frame = TRUE)
+
+  gainedemp <- tm_shape(buildings)+
+  tm_polygons(col = "white",
+           size = 1,
+           border.col = "grey",
+           border.lwd = 1)+
+  tm_shape(recntEmp_sf) +
+  tm_bubbles(col = "green",
+             size = "no.ofempShifted")+
+  tm_compass(position = c("right", "top"),
+                 type = "4star",
+                 show.labels = 2)+
+  tm_layout(main.title = "Which employer gained more employees ?",
+
+    main.title.size = 2,
+            legend.height = 0.3,
+            legend.width = 0.3,
+            legend.outside = FALSE,
+            legend.position = c("left", "bottom"),
+            frame = TRUE)
+
+ tmap_arrange(lostemp,gainedemp,outer.margins = 0.02)
+```
+
+Employers like 407, 411 lost 3 employees in the overall timeline of this data collection whereas employers with Ids 389, 397 have gained 14 and 13 employees respectively. But there are possibilities when a employee left a job,many others can join the same employer. So,considering that edge case, the below graph shows overall turnover for all the employers in the town.
+
+
+```{r, fig.height=10, fig.width= 10, echo=FALSE}
+
+overallTurnoverdf_sf <- overallTurnoverdf_sf %>%
+  mutate(`No. of employees` = abs(empChange)) %>%
+  dplyr::rename("Turnover Status" = "turnoverStatus")
+
+tmap_mode("plot")
+tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "grey",
+           border.lwd = 1)+
+tm_shape(overallTurnoverdf_sf) +
+  tm_bubbles(col = "Turnover Status",
+             size = "No. of employees",
+             scale = 2,
+             border.col = "black",
+             border.lwd = 0.5,
+             palette = "Set1")+
+  tm_compass(position = c("right", "top"),
+                 type = "4star",
+                 show.labels = 2)+
+  tm_layout(main.title = "Which employers have low and high turnover ?",
+            
+    main.title.size = 2,
+            legend.height = 0.3,
+            legend.width = 0.3,
+            legend.outside = FALSE,
+            legend.position = c("left", "bottom"),
+            frame = TRUE)
+  # tm_view(set.zoom.limits = c(13,18))
+```
+
+It is well seen that the employers in the west part of the town has seen employee growth compared to other parts of the city. 
+
+
+```{r, fig.width= 10, fig.height= 8, echo=FALSE}
+
+low_turnover <- overallTurnoverdf_sf %>%
+  filter(`Turnover Status` == "Employee count increase") %>%
+  arrange(desc(`No. of employees`))
+
+low_plot <- ggplot(low_turnover) + 
+  geom_col(aes(x = employerId, y = empChange), size = 1, color = "darkblue", fill = "white") +
+  
+  # geom_line(aes(x = employerId, y = 500*no.ofjobs), size = 1.5, color="red", group = 1) + 
+  
+  # scale_y_continuous(sec.axis = sec_axis(~./500,
+  #                                        name = "No. of Jobs"))+
+  labs(y= 'No.of employees shifted',
+       title="Which employer attracts more employees ?", 
+       x='Employer Id') +
+  ylim(0,16)+
+  #coord_flip()+
+  theme(axis.title.y=element_text(angle=0),
+        axis.title.y.right = element_text(vjust = 0.5,angle = 0),
+        axis.ticks.x=element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(color='grey'), 
+        plot.title = element_text(hjust = 0.5), 
+        axis.title.y.left = element_text(vjust = 0.5),
+        text = element_text(size=12,face="bold") )
+low_plot
+```
+
+Calculating the difference of employees joined an organisation and no. of employees left an organisation, the employer with id 1756, 1757 and 389 have noticed very low turnover with 14, 13 and 8 employees joining the firm.
+
+```{r, echo=FALSE}
+
+# educatedEmp <- read_csv("data/educatedEmp.csv")
+# WageEmp <- educatedEmp %>%
+#   group_by(employerId) %>%
+#   dplyr::summarise(totalWage = sum(hourlyRate))
+# 
+# WageEmp_sf <- employers %>%
+#   filter(employerId %in% WageEmp$employerId )%>%
+#   mutate(WageEmp$totalWage) %>%
+#   dplyr::rename("totalWage" = "WageEmp$totalWage")
+# 
+# saveRDS(WageEmp_sf, "data/WageEmp_sf.rds")
+
+  
+```
+```{r, fig.height=10, fig.width=10, echo = FALSE}
+
+tmap_mode("plot")
+tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "grey",
+           border.lwd = 1)+
+tm_shape(WageEmp_sf) +
+  tm_bubbles(col = "yellow",
+             size = "totalWage")+
+  tm_compass(position = c("right", "top"),
+                 type = "4star",
+                 show.labels = 2)+
+  tm_layout(main.title = "Which employers spend more for wage ?",
+
+    main.title.size = 2,
+            legend.height = 0.3,
+            legend.width = 0.3,
+            legend.outside = FALSE,
+            legend.position = c("right", "top"),
+            frame = TRUE)
+```
+
+Finally, we can see that employer with Id 383 spends the most for wages i.e. total wage of 258/ per hour summing up all the employees followed by employer with Ids 1786 and 877 by paying 238 and 229 respectively for their employees.
+
+
+
 
 
 
