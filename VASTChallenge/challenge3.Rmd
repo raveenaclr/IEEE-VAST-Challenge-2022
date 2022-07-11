@@ -1,0 +1,71 @@
+---
+title: "IEEE VAST CHALLENGE 2022"
+# description: |
+#   A new article created using the Distill format.
+# author:
+#   - name: Nora Jones 
+#     url: https://example.com/norajones
+#     affiliation: Spacely Sprockets
+#     affiliation_url: https://example.com/spacelysprokets
+#date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+<p
+align="center">
+
+<b>            </b>  
+<b> Entry Name:  "RLR-SMU-C3" </b>  
+<b> VAST Challenge 2022 </b>  
+<b> Challenge 3 </b>
+</p>
+
+
+### Team Members:
+
+Leslie Long Nu, Singapore Management University, nu.long.2021@mitb.smu.edu.sg  
+Raunak Kapur, Singapore Management University, raunakk.2021@mitb.smu.edu.sg  
+Raveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.sg
+
+**Student Team:** YES
+
+### Tools Used:
+
++ RStudio  
++ Excel  
++ JMP Pro  
+
+**Approximately how many hours were spent working on this submission in total?** 
+
+**May we post your submission in the Visual Analytics Benchmark Repository after VAST Challenge 2022 is complete?** YES 
+
+### Video
+
+[video](http://www.westbirmingham.ac.uk/uwb-smith-mc2-video.wmv)
+
+Consider the financial status of Engagement’s businesses and residents. Use visual analytics to analyze the available data and develop responses to the questions to be provided. In addition, prepare a video that shows how you used visual analytics to solve this challenge. 
+
+### Questions
+
+1 – Over the period covered by the dataset, which businesses appear to be more prosperous? Which appear to be struggling? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
+
+ 
+
+Provide your answer and corresponding images here.
+
+2 – How does the financial health of the residents change over the period covered by the dataset? How do wages compare to the overall cost of living in Engagement? Are there groups that appear to exhibit similar patterns? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
+
+ 
+
+Provide your answer and corresponding images here.
+
+3 – Describe the health of the various employers within the city limits. What employment patterns do you observe? Do you notice any areas of particularly high or low turnover? Limit your response to 10 images and 500 words.
+
+
+
+
+

@@ -1,0 +1,28 @@
+{
+  "articles": [
+    {
+      "path": "about.html",
+      "title": "About this site",
+      "description": "Some additional details about the website",
+      "author": [],
+      "contents": "\r\n\r\n\r\n\r\n",
+      "last_modified": "2022-07-11T18:22:18+08:00"
+    },
+    {
+      "path": "challenge3.html",
+      "title": "IEEE VAST CHALLENGE 2022",
+      "author": [],
+      "contents": "\r\n\r\n  Entry Name: “RLR-SMU-C3”  VAST Challenge 2022  Challenge 3 \r\n\r\nTeam Members:\r\nLeslie Long Nu, Singapore Management University, nu.long.2021@mitb.smu.edu.sg\r\nRaunak Kapur, Singapore Management University, raunakk.2021@mitb.smu.edu.sg\r\nRaveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.sg\r\nStudent Team: YES\r\nTools Used:\r\nRStudio\r\nExcel\r\nJMP Pro\r\nApproximately how many hours were spent working on this\r\nsubmission in total?\r\nMay we post your submission in the Visual Analytics Benchmark\r\nRepository after VAST Challenge 2022 is complete? YES\r\nVideo\r\nvideo\r\nConsider the financial status of Engagement’s businesses and\r\nresidents. Use visual analytics to analyze the available data and\r\ndevelop responses to the questions to be provided. In addition, prepare\r\na video that shows how you used visual analytics to solve this\r\nchallenge.\r\nQuestions\r\n1 – Over the period covered by the dataset, which businesses appear\r\nto be more prosperous? Which appear to be struggling? Describe your\r\nrationale for your answers. Limit your response to 10 images and 500\r\nwords.\r\nProvide your answer and corresponding images here.\r\n2 – How does the financial health of the residents change over the\r\nperiod covered by the dataset? How do wages compare to the overall cost\r\nof living in Engagement? Are there groups that appear to exhibit similar\r\npatterns? Describe your rationale for your answers. Limit your response\r\nto 10 images and 500 words.\r\nProvide your answer and corresponding images here.\r\n3 – Describe the health of the various employers within the city\r\nlimits. What employment patterns do you observe? Do you notice any areas\r\nof particularly high or low turnover? Limit your response to 10 images\r\nand 500 words.\r\n\r\n\r\n\r\n",
+      "last_modified": "2022-07-11T18:26:10+08:00"
+    },
+    {
+      "path": "index.html",
+      "title": "VAST Challenge ",
+      "description": "Welcome to the website. I hope you enjoy it!\n",
+      "author": [],
+      "contents": "\r\n\r\n\r\n\r\n",
+      "last_modified": "2022-07-11T18:26:59+08:00"
+    }
+  ],
+  "collections": []
+}
