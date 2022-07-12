@@ -53,9 +53,360 @@ Consider the financial status of Engagement’s businesses and residents. Use vi
 
 1 – Over the period covered by the dataset, which businesses appear to be more prosperous? Which appear to be struggling? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
 
- 
+```{r}
+packages=c('plotly', 'rmarkdown', 'psych', 'sf', 'tmap',
+               'DT', 'gglorenz', 'hrbrthemes','shinydashboard',
+               'gganimate', 'tidyverse', 'ggthemes', 'reactable',
+              'gifski', 'gapminder', 'quantmod', 'shinythemes',
+               'treemap', 'treemapify', 'ggridges','dataui','zoo', 'reactablefmtr', 'crosstalk','rPackedBar', 'lubridate', 'remotes', 'ggplot2', 'dplyr', 'ggstatsplot','shiny', 'tools', 'ggHoriPlot','heatmaply','rsconnect','shinycssloaders')
 
-Provide your answer and corresponding images here.
+for (p in packages){
+  library(p, character.only=T)
+}
+
+```
+
+
+
+```{r}
+Participants<-read_csv("data/Q2/Participants.csv",show_col_types = FALSE)
+ParticipantsApartmentLocation<-read_csv("data/Q2/ParticipantsApartmentLocation.csv",show_col_types = FALSE)
+buildings<-read_sf("data/Q2/Buildings.csv", 
+                   options = "GEOM_POSSIBLE_NAMES=location")
+
+ParticipantSavings<-readRDS("data/Q2/ParticipantSavings.rds")
+FinHealth<-readRDS("data/Q2/FinHealth.rds")
+ParticipantMonthlySavings<-readRDS("data/Q2/ParticipantMonthlySavings.rds")
+ParticipantMonthlySpark<-readRDS("data/Q2/ParticipantMonthlySpark.rds")
+buildings<-read_sf("data/Q2/Buildings.csv", 
+                   options = "GEOM_POSSIBLE_NAMES=location")
+
+InterestGroupGraph<-readRDS("data/Q2/InterestGroupGraph.rds")
+StatusLogDetails<-readRDS("data/Q2/StatusLogDetails.rds")
+EducationExpenseCategory<-readRDS("data/Q2/EducationExpenseCategory.rds")
+ExpenseProportionMonthly<-readRDS("data/Q2/ExpenseProportionMonthly.rds")
+
+```
+
+
+
+```{r}
+ParticipantMonthlySparkData<-ParticipantMonthlySpark%>%
+  select(participantId,Earning,Expense,joviality)
+
+```
+
+### How does the financial health of the residents change over the period covered by the dataset
+
+```{r}
+reactable(
+      ParticipantMonthlySparkData,
+      columns = list(
+        participantId = colDef(maxWidth = 170,
+                               name="Id"),
+        `Earning` = colDef(
+          cell = react_sparkline(ParticipantMonthlySparkData,
+                                 highlight_points = highlight_points(
+                                   min = "red", max = "blue"),
+                                 labels = c("first", "last"))
+        ),
+        `Expense` = colDef(
+          cell = react_sparkline(ParticipantMonthlySparkData,
+                                 highlight_points = highlight_points(
+                                   min = "red", max = "blue"),
+                                 labels = c("first", "last"))
+        ),
+        `joviality` =  colDef(
+          cell = data_bars(
+            data =ParticipantMonthlySparkData,
+            fill_color = viridis::mako(5),
+            background = '#F1F1F1',
+            fill_opacity = 0.8,
+            round_edges = TRUE,
+            text_position = 'outside-end',
+            number_fmt = scales::comma_format(accuracy = 0.001)
+          )
+        )
+      )
+    )%>% 
+      add_title(
+        title = 'Are we financially fit?', 
+        
+        align = 'center',
+        font_color = '#000000'
+      )
+
+```
+The dashboard helps us understand the Earning and Expenditure pattern of the participants in the last 15 months. We can notice here that 131 participants have moved from the city in the period as they are not recorded. On scrolling through each and every participant, we see a sharp peak in the Expense category which denotes the rent payment for the shelter in the month of March. This may include the annual maintainance as well along with the rent.
+
+On choosing joviality as one of the filters, we can see those whose cost of living is nearing a straight line over the months are <b>happier</b> than the ones whose cost of living fluctuate
+
+The cost of living may not stay constant when you have kids in the house
+
+
+
+### How do wages compare to the overall cost of living in Engagement?
+
+```{r}
+lorenz<-ggplot(ParticipantSavings%>%
+                     select(participantId,
+                            TotalEarning)%>%
+                     pivot_longer(-1)) +
+      stat_lorenz(aes(value,color=name),
+                  show.legend = FALSE)+
+      coord_fixed()+
+      theme_minimal()+
+      theme(legend.title= element_blank())+
+      ggtitle("Inequality amongst participants")+
+      geom_abline(linetype = "dashed")+
+      xlab("Cummulative Percentage of Participants")+
+      ylab("Cummulative Percentage of Amount")+
+      scale_color_manual(values=c('darkgreen','blue'))+
+      labs(caption="Source: https://www.investopedia.com/terms/l/lorenz-curve.asp")
+    
+    
+    
+    ggplotly(lorenz)
+
+```
+
+
+Observations:
+
+<ul>
+<li>The income distribution in Engagement city tells us that 50% of the population takes in 25% of the city’s income.</li>
+<li>The absolute line gives us an ideal scenario where the 50% of the population takes in 50% of the city’s income</li>
+</ul>
+
+
+```{r}
+    
+    ExpenseProportionMonthlyData<-ExpenseProportionMonthly%>%
+      group_by(participantId)%>%
+  summarise(PropEducation=mean(PropEducation),
+            PropFood=mean(PropFood),
+  PropRecreation=mean(PropRecreation),
+  PropShelter=mean(PropShelter))%>%
+  filter(PropShelter!=0)
+    
+```
+
+```{r}
+    reactable(
+      ExpenseProportionMonthlyData,
+      columns = list(
+        participantId = colDef(maxWidth = 120,
+                               name="Id"),
+        `PropEducation` = colDef(
+          name = 'Education (%)',
+          maxWidth=200,
+          cell = bubble_grid(
+            data = ExpenseProportionMonthlyData,
+            colors = '#edf8e9',
+            min_value=0,
+            max_value=10,
+            number_fmt = scales::number_format(accuracy = 0.1)
+          )
+        ),
+        `PropFood` = colDef(
+          name = 'Food (%)',
+          cell = bubble_grid(
+            data = ExpenseProportionMonthlyData,
+            colors = '#56A3A6',
+            min_value=0,
+            max_value=50,
+            number_fmt = scales::number_format(accuracy = 0.1)
+          )
+          
+        ),
+        `PropShelter` = colDef(
+          name = 'Shelter (%)',
+          cell = bubble_grid(
+            data = ExpenseProportionMonthlyData,
+            colors = '#E3B505',
+            min_value=0,
+            max_value=60,
+            number_fmt = scales::number_format(accuracy = 0.1)
+          )
+          
+        ),
+        `PropRecreation` = colDef(
+          name = 'Recreation (%)',
+          cell = bubble_grid(
+            data = ExpenseProportionMonthlyData,
+            colors = '#f2f0f7',
+            min_value=0,
+            max_value=60,
+            number_fmt = scales::number_format(accuracy = 0.1)
+          )
+          
+        )
+      )
+    )%>% 
+      add_title(
+        title = 'How much do they spend?', 
+        
+        align = 'center',
+        font_color = '#000000'
+      )
+
+```
+Averaging the proportion in the past 15 months, we can see that participants who spend a lot on education, spend less on other categories which goes on to prove that raising a kid is expensive in the city. Similarly those who spend a lot on shelter, have no such responsibilities and as a result can afford to pay high rent.
+
+
+```{r}
+
+ggplot(StatusLogDetails%>%
+             
+             group_by(participantId,Weekday,category)%>%
+             summarise(Expense=mean(TotalAmount))%>%
+                         filter(category=="Food" | category=="Recreation"),
+           aes(x=factor(Weekday,levels=c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")),
+               category,
+               fill = Expense)) +
+      geom_tile(aes(text=paste("Total Time: ",Expense)),color = "white",
+                size = 0.1,lwd = 1.5,linetype = 1) +
+      coord_equal() +
+      scale_fill_gradient2(low = "#075AFF",
+                           mid = "#FFFFCC",
+                           high = "#FF0000")+
+      labs(x = NULL,
+           y = NULL,
+           title = "How are weekly trends?")+
+      theme_ipsum()+
+      guides(fill = guide_colourbar(barwidth = 0.5,
+                                    barheight = 5))+
+      theme(axis.ticks = element_blank(),
+            axis.text.x = element_text(size = 10,angle=90),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(hjust = 0.5),
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 6))
+
+
+```
+
+As it can be noticed here, the participants tend to spend more on recreation than food. Studying the weekday and weekend patterns, we can see an increase in the expense during the weekend. But overall, even if its a weekday or a weekend, one wants to balance out between work and play and ensures that they do not spend all their time working but spend a considerable amount of time enjoying and refreshing themselves.
+
+
+###Are there groups that appear to exhibit similar patterns?
+
+```{r}
+
+ParticipantSavings%>%
+      mutate(interestGroup_colours=case_when(
+        interestGroup=="A" ~"#F5A24B",
+        interestGroup=="B" ~"#AF52D5",
+        interestGroup=="C" ~"#4C9B9B",
+        interestGroup=="D" ~"#C0DFA1",
+        interestGroup=="E" ~"#9FC490",
+        interestGroup=="F" ~"#82A3A1",
+        interestGroup=="G" ~"#465362",
+        interestGroup=="H" ~"#011936",
+        interestGroup=="I" ~"#012957",
+      ))%>%
+      select(participantId,interestGroup,interestGroup_colours,TotalEarning,TotalExpense,joviality)%>%
+      reactable(
+        
+        columns = list(
+          participantId = colDef(maxWidth = 120),
+          interestGroup=colDef(
+            cell = color_tiles(
+              data = .,
+              color_ref = 'interestGroup_colours'
+            )
+            
+          ),
+          `TotalEarning` = colDef(
+            cell = color_tiles(ParticipantSavings,
+                               colors=viridis::mako(5),
+                               number_fmt = scales::comma_format(accuracy = 0.1))
+          ),
+          `TotalExpense` = colDef(
+            cell = color_tiles(ParticipantSavings,
+                               colors=viridis::mako(5),
+                               number_fmt = scales::comma_format(accuracy = 0.1))
+          ),
+          `joviality` =  colDef(
+            cell = data_bars(
+              data =ParticipantSavings,
+              fill_color = viridis::mako(5),
+              background = '#F1F1F1',
+              fill_opacity = 0.8,
+              round_edges = TRUE,
+              text_position = 'outside-end',
+              number_fmt = scales::comma_format(accuracy = 0.001)
+            )
+          )
+        )
+      )%>% 
+      add_title(
+        title = 'How similar are the groups', 
+        
+        align = 'center',
+        font_color = '#000000'
+      )
+
+```
+
+
+```{r}
+InterestGroupGraph%>%
+      ggplot() +
+      geom_horizon(aes(x = date, y=log(Expense*-1)), origin = "midpoint", horizonscale = 6)+
+      facet_grid(interestGroup~.)+
+      theme_few() +
+      scale_fill_hcl(palette = 'RdBu') +
+      theme(panel.spacing.y=unit(0, "lines"), strip.text.y = element_text(
+        size = 5, angle = 0, hjust = 0),
+        legend.position = 'none',
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank()
+      ) +
+      scale_x_date(expand=c(0,0), date_breaks = "1 month", date_labels = "%b%y") +
+      ggtitle('Expenses among Interest Groups')
+    
+
+
+
+
+```
+<ul>
+<li>Over the months we can see that the cost of living of members in F and J had a more ‘expensive’ lifestyle compared to other group members </li>
+<li>Members in A,G,H saw a fluctuation in their cost of livings over the months.</li>
+<li>Members in E spent the least over the 15 months period</li>
+<li>The sharp peak at the start of every month denotes rent paid</li>
+
+
+```{r}
+ParticipantsExpenseCategory<-EducationExpenseCategory
+    
+    row.names(ParticipantsExpenseCategory) <- ParticipantsExpenseCategory$participantId
+    ParticipantsExpenseCategory1 <-
+      select(ParticipantsExpenseCategory,c(2:5))
+    ParticipantsExpenseCategory_matrix <- data.matrix(ParticipantsExpenseCategory1)
+    heatmaply(normalize(ParticipantsExpenseCategory_matrix),
+              Colv=NA,
+              seriate = "none",
+              colors = Blues,
+              k_row = 5,
+              margins = c(NA,200,60,NA),
+              fontsize_row = 4,
+              fontsize_col = 5,
+              main="Participants and their financial status \nDataTransformation using Normalise Method",
+              xlab = "Categories",
+              ylab = "ParticipantId"
+    )
+
+
+```
+
+Based on categories as cluster variables, we were able to segment participants to understand how their spending patterns have been. We have seen that participants who spend more on education, tend to spend more on recreation as well signifying a good mental health balance. 
+
 
 2 – How does the financial health of the residents change over the period covered by the dataset? How do wages compare to the overall cost of living in Engagement? Are there groups that appear to exhibit similar patterns? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
 
@@ -96,10 +447,34 @@ jobs <- read_csv("data/jobs.csv")
 
 travel <- read_csv("data/travelJournal.csv")
 participants <- read_csv("data/participants.csv")
-```
-### Describe the health of the various employers within the city limits. What employment patterns do you observe? Do you notice any areas of particularly high or low turnover? 
 
-Well, from the given data, the health of the employers can be compared by no. of jobs and wage they provide. Given the fact that the employers vary in no. of jobs they provide , who pays their employees high wage is also a crucial criteria while determining the employers financial health.
+buildshp_csv <- read_csv("data/buildshp_csv.csv")
+regionsf1_csv <- read_csv("data/regionsf1_csv.csv")
+```
+
+Well, from the given data, the health of the employers can be compared by no. of jobs and wage they provide. Given the fact that the employers vary in no. of jobs they provide , who pays their employees high wage is also a crucial criteria while determining the employers financial health. First let us look how employers are widespread across the town.
+
+```{r,fig.height = 8, fig.width = 12, echo=FALSE}
+
+buildandjobs <- inner_join(x=regionsf1_csv ,
+                           y=buildshp_csv,
+                           by = c("buildingId" = "bldngId"))
+
+ treemap(buildandjobs,
+        index = c('region', 'employerId'),
+        vSize = "No. of jobs",
+        vColor = 'Average Wage',
+        palette = "RdYlBu",
+        type = 'value',
+        title = 'Employer by localities',
+        fontsize.title = 20
+        )
+
+
+
+```
+
+It is noticed that Central region the employers in the central region offers quite a lot of jobs followed by North-west, East and South parts of the town as the treemap is constructed in a way where he size of the block represents the no. of job poistions in the company and the color indicates the average wage per employee. So, we can infer that employer 1308 in Central, 1304 in North-west, 420 in East offer high wage to their employees.
 
 ```{r, echo=FALSE}
 no.ofjobs <- jobs %>% 
