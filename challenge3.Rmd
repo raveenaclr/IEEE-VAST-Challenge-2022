@@ -53,6 +53,11 @@ Consider the financial status of Engagement’s businesses and residents. Use vi
 
 1 – Over the period covered by the dataset, which businesses appear to be more prosperous? Which appear to be struggling? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
 
+
+
+2 – How does the financial health of the residents change over the period covered by the dataset? How do wages compare to the overall cost of living in Engagement? Are there groups that appear to exhibit similar patterns? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
+
+ 
 ```{r}
 packages=c('plotly', 'rmarkdown', 'psych', 'sf', 'tmap',
                'DT', 'gglorenz', 'hrbrthemes','shinydashboard',
@@ -289,7 +294,7 @@ ggplot(StatusLogDetails%>%
 As it can be noticed here, the participants tend to spend more on recreation than food. Studying the weekday and weekend patterns, we can see an increase in the expense during the weekend. But overall, even if its a weekday or a weekend, one wants to balance out between work and play and ensures that they do not spend all their time working but spend a considerable amount of time enjoying and refreshing themselves.
 
 
-###Are there groups that appear to exhibit similar patterns?
+### Are there groups that appear to exhibit similar patterns?
 
 ```{r}
 
@@ -407,12 +412,6 @@ ParticipantsExpenseCategory<-EducationExpenseCategory
 
 Based on categories as cluster variables, we were able to segment participants to understand how their spending patterns have been. We have seen that participants who spend more on education, tend to spend more on recreation as well signifying a good mental health balance. 
 
-
-2 – How does the financial health of the residents change over the period covered by the dataset? How do wages compare to the overall cost of living in Engagement? Are there groups that appear to exhibit similar patterns? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
-
- 
-
-Provide your answer and corresponding images here.
 
 3 – Describe the health of the various employers within the city limits. What employment patterns do you observe? Do you notice any areas of particularly high or low turnover? Limit your response to 10 images and 500 words.
 
