@@ -27,11 +27,12 @@ align="center">
 
 ### Team Members:
 
+Raveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.sg PRIMARY    
 Leslie Long Nu, Singapore Management University, nu.long.2021@mitb.smu.edu.sg  
 Raunak Kapur, Singapore Management University, raunakk.2021@mitb.smu.edu.sg  
-Raveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.sg
 
-**Student Team:** YES
+
+**Student Team:**  YES
 
 ### Tools Used:
 
@@ -39,7 +40,7 @@ Raveena Chakrapani, Singapore Management University, raveenac.2021@mitb.smu.edu.
 + Excel  
 + JMP Pro  
 
-**Approximately how many hours were spent working on this submission in total?** 60
+**Approximately how many hours were spent working on this submission in total?**  60
 
 **May we post your submission in the Visual Analytics Benchmark Repository after VAST Challenge 2022 is complete?** YES 
 
@@ -54,14 +55,12 @@ Consider the financial status of Engagement’s businesses and residents. Use vi
 1 – Over the period covered by the dataset, which businesses appear to be more prosperous? Which appear to be struggling? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
 
 ```{r load library}
-packages = c('tidyverse', 'lubridate', 
+packages=c('tidyverse', 'lubridate', 
              'zoo', 'ggthemes', 'reactable', 
              'reactablefmtr', 'gt', 'gtExtras')
+
 for (p in packages){
-  if(!require(p, character.only = T)){
-    install.packages(p)
-  }
-  library(p,character.only = T)
+  library(p, character.only=T)
 }
 ```
 
@@ -147,7 +146,7 @@ Excluding records in Mar 2022, there are three types of trends for Pubs:
 * Pubs see a slight trend of recovering as Revenue in Apr 2023 is slightly higher than the average monthly revenue, however, more data is required to validate if the trend persists. These are Pub 1343, 1344, 893, 894
 * Pubs that are most struggling as with small overall business size and decreasing revenue: 442, 443, 444
 
-Overall, pub business is not doing well with generally decreasing revenue trend. There is no pub observed with prospering business in the duration of the study.
+* Overall, Pubs that are most struggling due to small overall business size and decreasing revenue: 442, 443, 444
 
 ```{r calendar pub, fig.height=15, fig.width=16}
 
@@ -829,32 +828,6 @@ plotly::config(p4, displayModeBar = FALSE)
 ```
 
 It is clear that employers with Ids 1737, 1771 provide high wages for employees with Low Educational qualification. Similarly employers with Ids 424, 1777 provide high wages for employees with High School or College Educational qualification. Employers with Ids 1304, 1782 provide high wages for employees with Bachelors Educational qualification and employers with Ids 428, 865 provide high wages for employees with Graduate Educational qualification.
-
-```{r,fig.height = 8, fig.width = 12, echo=FALSE}
-
-
-switchEmployeesAllDetails$participantId <- as.character(switchEmployeesAllDetails$participantId)
-                     
-p1<- ggplot(switchEmployeesAllDetails,
-            aes(x=participantId, y=payDiff))+
-     geom_bar(stat="identity", aes(fill = payStatus))+
-     scale_fill_manual(values=c(`Pay Decrease` ="firebrick1", `Pay Increase` ="steelblue")) +
-     labs(y= 'Pay\n Difference',
-          title="Employee Wage Difference Between Previous and Recent Workplace", 
-          x='Participant Id') +
-     theme(axis.title.y=element_text(angle=0),
-           #axis.ticks.x=element_blank(),
-           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-           
-           panel.background = element_blank(),
-           axis.line = element_line(color='grey'), 
-           plot.title = element_text(hjust = 0.5),
-           axis.title.y.left = element_text(vjust = 0.5), axis.text = element_text(face="bold")
-      )
-p1
-```
-
-It is also understood that participants don't switch the job just for higher salary. It is because almost 50% of the participants who switched job gets paid low than the previous job. 
 
 
 ```{r, fig.height=10 , fig.width=17, echo =FALSE}
