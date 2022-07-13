@@ -53,6 +53,255 @@ Consider the financial status of Engagement’s businesses and residents. Use vi
 
 1 – Over the period covered by the dataset, which businesses appear to be more prosperous? Which appear to be struggling? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
 
+```{r load library}
+packages = c('tidyverse', 'lubridate', 
+             'zoo', 'ggthemes', 'reactable', 
+             'reactablefmtr', 'gt', 'gtExtras')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+```{r read data}
+all <- readRDS('data/all.rds')
+
+```
+
+```{r prepare monthly}
+total <- all %>%
+  group_by(locationType, locationId2) %>%
+  summarise(totalRevenue= sum(spending))
+
+res <- total %>%
+  filter(locationType=='Restaurant')
+
+pub <- total %>%
+  filter(locationType=='Pub')
+
+reslow <- quantile(res$totalRevenue, probs=c(0.25))
+reshigh <- quantile(res$totalRevenue, probs=c(0.75))
+publow<- quantile(pub$totalRevenue, probs=c(0.25))
+pubhigh<- quantile(pub$totalRevenue, probs=c(0.75))
+
+res <- res %>%
+  mutate(Rank= ifelse(totalRevenue>reslow, (ifelse(totalRevenue<reshigh, 'medium', 'high')), 'low'))
+
+pub <- pub %>%
+  mutate(Rank= ifelse(totalRevenue>publow, (ifelse(totalRevenue<pubhigh, 'medium', 'high')), 'low'))
+
+total<- rbind(res, pub)
+all <- left_join(all, total)
+#all <- left_join(all, pub)
+
+monthly <- all %>%
+  group_by(Rank, locationType, locationId2, as.yearmon(date)) %>%
+  summarise(Revenue= sum(spending)) %>%
+  rename('Month' = 'as.yearmon(date)', 
+         'Business' = 'locationId2',
+         'Type' = 'locationType')
+
+```
+
+The sparkline plot of the businesses’ monthly revenue trend gives us an overview of the prosperity of the businesses in town, namely pubs and restaurant. May 2023’s records are excluded from the data as the records do not include a full month. 
+
+The following plot shows that all pubs’ business were at their peaks in the first month of the study, Mar 2022, and faced drastic decline thereafter. Business in Mar 2022 is up to 2x of the average monthly revenue in the duration of the study. 
+
+```{r sparkline pub1}
+monthly %>%
+  filter(Month != 'May 2023',
+         Type == 'Pub') %>%
+  group_by(Business) %>%
+  summarize( Min = min(Revenue),
+             Max = max(Revenue),
+             Average = mean(Revenue),
+             'Monthly Revenue' = list(Revenue), 
+            .groups = "drop") %>%
+   gt() %>%
+   gt_plt_sparkline('Monthly Revenue')
+
+```
+
+As Mar 2022’s revenue is significantly higher than the rest of the months, the following plot is the monthly revenue sparkline plot excluding Mar 2022, which takes a closer look on the trend in the subsequent months. 
+
+```{r sparkline pub2}
+monthly %>%
+  filter(Month != 'May 2023',
+         Month != 'Mar 2022',
+         Type == 'Pub') %>%
+  group_by(Rank, Business) %>%
+  summarize( Min = min(Revenue),
+             Max = max(Revenue),
+             Average = mean(Revenue),
+             'Monthly Revenue' = list(Revenue), 
+            .groups = "drop") %>%
+   gt() %>%
+   gt_plt_sparkline('Monthly Revenue')
+```
+
+Excluding records in Mar 2022, there are three types of trends for Pubs: 
+
+* Pubs see an overall decreasing trend in revenue, but have a relative larger business size, so might be able to still sustain: Pub 1342, 1798, 1799, 1800, 892
+* Pubs see a slight trend of recovering as Revenue in Apr 2023 is slightly higher than the average monthly revenue, however, more data is required to validate if the trend persists. These are Pub 1343, 1344, 893, 894
+* Pubs that are most struggling as with small overall business size and decreasing revenue: 442, 443, 444
+
+Overall, pub business is not doing well with generally decreasing revenue trend. There is no pub observed with prospering business in the duration of the study.
+
+```{r calendar pub, fig.height=15, fig.width=16}
+
+weeks <- c('Sun', 'Sat', 'Fri', 'Thu', 'Wed', 'Tue', 'Mon')
+all <- all %>%
+  mutate(year = year(date),
+        week= ifelse(year==2022, week(date), 52+week(date)))
+
+grouped <- all %>%
+  count(locationType, locationId2, weekday, week)
+
+
+```
+
+```{r, fig.height=10, fig.width=16}
+ggplot(grouped %>%
+         filter(locationId2=='Pub 1344'|locationId2=='Pub 1343'|
+                  locationId2=='Pub 894'|
+                  locationId2=='Pub 893'),
+  aes(week, factor(weekday, levels=weeks), fill=n)) +
+  geom_tile(color = "white", 
+          size = 0.1) + 
+  theme_tufte(base_family = "Helvetica") + 
+  coord_equal() +
+  scale_fill_gradient(name = "Revenue",
+                    low = "sky blue", 
+                    high = "dark blue") +
+  facet_wrap(~locationId2, ncol=1) +
+  labs(x = 'Week Number', 
+     y = NULL, 
+     title = "Slight Recovering Pubs' Weekly Revenue") +
+  theme(axis.ticks = element_blank(),
+      plot.title = element_text(hjust = 0.5,
+                                size = 22),
+      legend.title = element_text(size = 20),
+      legend.text = element_text(size = 14), 
+      axis.text.x = element_text(size= 14),
+      axis.title = element_text(size = 14),
+      strip.text = element_text(size= 18),
+      axis.text.y = element_text(size=14))
+  
+```
+
+```{r, fig.height=10, fig.width=16}
+ggplot(grouped %>%
+         filter(locationId2=='Pub 442'|locationId2=='Pub 443'|
+                  locationId2=='Pub 444'),
+  aes(week, factor(weekday, levels=weeks), fill=n)) +
+  geom_tile(color = "white", 
+          size = 0.1) + 
+  theme_tufte(base_family = "Helvetica") + 
+  coord_equal() +
+  scale_fill_gradient(name = "Revenue",
+                    low = "sky blue", 
+                    high = "dark blue") +
+  facet_wrap(~locationId2, ncol=1) +
+  labs(x = 'Week Number', 
+     y = NULL, 
+     title = "Most Struggling Pubs' Weekly Revenue") +
+  theme(axis.ticks = element_blank(),
+      plot.title = element_text(hjust = 0.5,
+                                size = 22),
+      legend.title = element_text(size = 20),
+      legend.text = element_text(size = 14), 
+      axis.text.x = element_text(size= 14),
+      axis.title = element_text(size = 14),
+      strip.text = element_text(size= 18),
+      axis.text.y = element_text(size=14))
+```
+
+The revenue for struggling and slight recovering pubs by day of the week and by week number is also plotted, to look at the week by week business performance. Generally, pubs are seen to have higher revenue during the weekends, as well as during the new years weekend (2023, week1). 
+
+**Restaurants**
+
+For restaurants, the trend is slightly different. We group restaurant businesses into three groups as well:
+
+* Peak in Mar 2022 and decreasing trend thereafter: Restaurant 1801, 1802, 1803, 446, 448, 895, 899, 1347, 1349, 
+* Lowe Revenue in Mar 2022 and shown growth in subsequent months: Restaurant 897, 1348, 1345, 1804, 
+* Fluctuating revenue and relatively stable business: Restaurant 1805, 447, 449, 1346, 445, 898
+
+Considering their business sizes, the most struggling restaurants are 1347 and 1349, followed by other restaurants with decreasing revenue. Restaurants 897 is most prosperous as it has relatively bigger business size and is still growing, followed by other growing restaurants. 
+
+```{r restaurant}
+monthly %>%
+  filter(Month != 'May 2023',
+         Type == 'Restaurant') %>%
+  group_by(Rank, Business) %>%
+  summarize( Min = min(Revenue),
+             Max = max(Revenue),
+             Average = mean(Revenue),
+             'Monthly Revenue' = list(Revenue), 
+            .groups = "drop") %>%
+   gt() %>%
+   gt_plt_sparkline('Monthly Revenue')
+```
+
+
+
+```{r, fig.height=20, fig.width=16}
+ggplot(grouped %>%
+         filter(locationId2=='Restaurant 1347'|locationId2=='Restaurant 1349'|locationId2=='Restaurant 1802'|locationId2=='Restaurant 1803'|locationId2=='Restaurant 446'| locationId2=='Restaurant 448'|locationId2=='Restaurant 895'|locationId2=='Restaurant 899'|locationId2=='Restaurant 1801'),
+  aes(week, factor(weekday, levels=weeks), fill=n)) +
+  geom_tile(color = "white", 
+          size = 0.1) + 
+  theme_tufte(base_family = "Helvetica") + 
+  coord_equal() +
+  scale_fill_gradient(name = "Revenue",
+                    low = "sky blue", 
+                    high = "dark blue") +
+  facet_wrap(~locationId2, ncol=1) +
+  labs(x = 'Week Number', 
+     y = NULL, 
+     title = "Struggling Restaurants' Weekly Revenue") +
+  theme(axis.ticks = element_blank(),
+      plot.title = element_text(hjust = 0.5,
+                                size = 22),
+      legend.title = element_text(size = 20),
+      legend.text = element_text(size = 14), 
+      axis.text.x = element_text(size= 14),
+      axis.title = element_text(size = 14),
+      strip.text = element_text(size= 18),
+      axis.text.y = element_text(size=14))
+```
+
+```{r, fig.height=10, fig.width=16}
+ggplot(grouped %>%
+         filter(locationId2=='Restaurant 1348'|locationId2=='Restaurant 1345'|locationId2=='Restaurant 897'|locationId2=='Restaurant 1804'),
+  aes(week, factor(weekday, levels=weeks), fill=n)) +
+  geom_tile(color = "white", 
+          size = 0.1) + 
+  theme_tufte(base_family = "Helvetica") + 
+  coord_equal() +
+  scale_fill_gradient(name = "Revenue",
+                    low = "sky blue", 
+                    high = "dark blue") +
+  facet_wrap(~locationId2, ncol=1) +
+  labs(x = 'Week Number', 
+     y = NULL, 
+     title = "Prosperous Restaurants' Weekly Revenue") +
+  theme(axis.ticks = element_blank(),
+      plot.title = element_text(hjust = 0.5,
+                                size = 22),
+      legend.title = element_text(size = 20),
+      legend.text = element_text(size = 14), 
+      axis.text.x = element_text(size= 14),
+      axis.title = element_text(size = 14),
+      strip.text = element_text(size= 18),
+      axis.text.y = element_text(size=14))
+  
+```
+
+While some restaurants show higher revenue/customer traffic during the weekends and some during weekdays, most restaurants see high revenue in New Years Weekend (2023 Week1). It is clear that 1347 and 1349 are the most struggling restaurants, with overall low revenue and some days with nil revenue. 
+
+On the other hand, although 1348's overall revenue is not low, as the business is growthing, it is identified as a prosperous restaurant. 
 
 
 2 – How does the financial health of the residents change over the period covered by the dataset? How do wages compare to the overall cost of living in Engagement? Are there groups that appear to exhibit similar patterns? Describe your rationale for your answers. Limit your response to 10 images and 500 words.
